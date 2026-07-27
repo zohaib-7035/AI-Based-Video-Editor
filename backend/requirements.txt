@@ -1,0 +1,13 @@
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+sqlalchemy==2.0.36
+greenlet==3.1.1
+pydantic-settings==2.6.1
+python-multipart==0.0.12
+aiofiles==24.1.0
+python-dotenv==1.0.1
+httpx==0.28.0
+# CPU transcription: faster-whisper only
+# GPU transcription: also install a CUDA-enabled ctranslate2 build separately
+faster-whisper==1.1.1
+requests>=2.32
