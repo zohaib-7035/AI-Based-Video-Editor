@@ -1,42 +1,70 @@
 import { useNavigate } from "react-router-dom";
 
 interface ModeCardProps {
+  label: string;
   title: string;
-  subtitle: string;
   description: string;
   steps: string[];
-  color: "violet" | "teal";
+  variant: "accent" | "neutral";
   onClick: () => void;
 }
 
-function ModeCard({ title, subtitle, description, steps, color, onClick }: ModeCardProps) {
-  const accent = color === "violet"
-    ? { border: "border-violet-700", bg: "bg-violet-900/30", btn: "bg-violet-600 hover:bg-violet-500", dot: "bg-violet-500", text: "text-violet-300" }
-    : { border: "border-teal-700", bg: "bg-teal-900/30", btn: "bg-teal-600 hover:bg-teal-500", dot: "bg-teal-500", text: "text-teal-300" };
+function ModeCard({ label, title, description, steps, variant, onClick }: ModeCardProps) {
+  const isAccent = variant === "accent";
 
   return (
     <div
-      className={`flex flex-col gap-5 rounded-2xl border ${accent.border} ${accent.bg} p-8 cursor-pointer hover:scale-[1.02] transition-transform`}
       onClick={onClick}
+      className={`group flex flex-col gap-6 rounded-lg border bg-studio-surface p-6 cursor-pointer transition-colors ${
+        isAccent
+          ? "border-studio-accent/30 hover:border-studio-accent/60"
+          : "border-studio-neutral/20 hover:border-studio-neutral/40"
+      }`}
     >
-      <div>
-        <p className={`text-xs font-semibold uppercase tracking-widest mb-1 ${accent.text}`}>{subtitle}</p>
-        <h2 className="text-2xl font-bold text-white">{title}</h2>
-        <p className="text-gray-400 text-sm mt-2">{description}</p>
+      {/* Top label */}
+      <div className="flex items-center gap-2">
+        <span
+          className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+            isAccent ? "bg-studio-accent" : "bg-studio-neutral"
+          }`}
+        />
+        <span
+          className={`text-[10px] font-medium uppercase tracking-widest ${
+            isAccent ? "text-studio-accent" : "text-studio-neutral"
+          }`}
+        >
+          {label}
+        </span>
       </div>
 
+      {/* Heading + description */}
+      <div className="flex flex-col gap-2">
+        <h2 className="text-lg font-semibold tracking-tight text-studio-text">{title}</h2>
+        <p className="text-xs text-studio-neutral leading-relaxed">{description}</p>
+      </div>
+
+      {/* Step list */}
       <ul className="flex flex-col gap-2">
         {steps.map((step) => (
-          <li key={step} className="flex items-center gap-2 text-sm text-gray-300">
-            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${accent.dot}`} />
+          <li key={step} className="flex items-start gap-2.5 text-xs text-studio-muted">
+            <span
+              className={`mt-[3px] w-1 h-1 rounded-full shrink-0 ${
+                isAccent ? "bg-studio-accent/60" : "bg-studio-neutral/60"
+              }`}
+            />
             {step}
           </li>
         ))}
       </ul>
 
+      {/* CTA */}
       <button
-        className={`mt-auto w-full py-2.5 rounded-lg text-white font-semibold text-sm ${accent.btn} transition-colors`}
-        onClick={onClick}
+        onClick={(e) => { e.stopPropagation(); onClick(); }}
+        className={`mt-auto w-full py-2 rounded text-xs font-medium text-studio-text transition-colors ${
+          isAccent
+            ? "bg-studio-accent hover:bg-studio-accent-hover"
+            : "bg-studio-neutral hover:bg-studio-neutral-hover"
+        }`}
       >
         Get Started
       </button>
@@ -48,22 +76,26 @@ export default function HomePage() {
   const navigate = useNavigate();
 
   return (
-    <div className="max-w-3xl mx-auto py-10">
+    <div className="max-w-2xl mx-auto py-8">
+      {/* Hero */}
       <div className="text-center mb-12">
-        <div className="inline-flex items-center justify-center w-14 h-14 bg-violet-600 rounded-2xl mb-4">
-          <span className="text-2xl font-bold text-white">AI</span>
+        <div className="inline-flex items-center justify-center w-12 h-12 bg-studio-accent rounded-lg mb-5">
+          <span className="text-base font-semibold text-studio-text">AI</span>
         </div>
-        <h1 className="text-4xl font-bold text-white mb-3">AI Video Editor</h1>
-        <p className="text-gray-400 text-base">
-          Local · Free · No cloud. Choose how you want to edit.
+        <h1 className="text-3xl font-semibold tracking-tight text-studio-text mb-3">
+          AI Video Editor
+        </h1>
+        <p className="text-sm text-studio-neutral">
+          Local · Free · No cloud. Choose your editing mode.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      {/* Mode cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <ModeCard
+          label="Step by step"
           title="Manual Editing"
-          subtitle="Step by step"
-          description="Full control over every editing step. Run each tool individually and review results before applying."
+          description="Full control over every step. Run each tool individually and review results before applying."
           steps={[
             "Upload your video",
             "Transcribe with Whisper AI",
@@ -72,14 +104,14 @@ export default function HomePage() {
             "Generate subtitles",
             "Export final video",
           ]}
-          color="violet"
+          variant="neutral"
           onClick={() => navigate("/library?mode=manual")}
         />
 
         <ModeCard
+          label="One prompt"
           title="AI Prompt Editing"
-          subtitle="One prompt does it all"
-          description="Describe what you want in plain English. The AI builds an editing plan and executes it for you automatically."
+          description='Describe what you want in plain English. The AI builds a plan and executes it automatically.'
           steps={[
             "Upload your video",
             'Type: "remove silences and fillers"',
@@ -88,13 +120,13 @@ export default function HomePage() {
             "Execute with one click",
             "Export final video",
           ]}
-          color="teal"
+          variant="accent"
           onClick={() => navigate("/library?mode=ai")}
         />
       </div>
 
-      <p className="text-center text-xs text-gray-600 mt-8">
-        You can switch modes anytime from the library.
+      <p className="text-center text-[10px] text-studio-neutral/60 mt-8 tracking-wide">
+        Switch modes anytime from the library.
       </p>
     </div>
   );

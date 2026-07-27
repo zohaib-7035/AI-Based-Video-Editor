@@ -1,3 +1,87 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --bg-primary:   #121212;
+  --bg-secondary: #1E1E1E;
+  --text-primary: #E0E0E0;
+  --text-secondary: #D3D3D3;
+  --accent:  #6082B6;
+  --neutral: #708090;
+}
+
+@layer base {
+  html {
+    background-color: #121212;
+    color: #E0E0E0;
+    font-family: "Inter", -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: #121212;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  code, kbd, samp, pre {
+    font-family: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar        { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track  { background: #1E1E1E; }
+  ::-webkit-scrollbar-thumb  { background: #708090; border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: #6082B6; }
+
+  video {
+    border-radius: 6px;
+    background: #121212;
+    display: block;
+  }
+
+  /* Prevent focus ring on mouse clicks, show on keyboard nav */
+  :focus:not(:focus-visible) { outline: none; }
+  :focus-visible { outline: 2px solid #6082B6; outline-offset: 2px; }
+
+  hr { border-color: rgba(112, 128, 144, 0.2); }
+}
+
+@layer components {
+  /* Primary button: accent fill */
+  .btn-primary {
+    @apply px-3 py-1.5 rounded bg-studio-accent hover:bg-studio-accent-hover text-studio-text text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  /* Secondary button: subtle surface */
+  .btn-secondary {
+    @apply px-3 py-1.5 rounded bg-studio-surface hover:bg-studio-surface-hover text-studio-muted border border-studio-neutral/20 text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  /* Ghost button: no background */
+  .btn-ghost {
+    @apply px-3 py-1.5 rounded text-studio-neutral hover:text-studio-muted hover:bg-studio-surface-hover text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  /* Neutral button: neutral fill */
+  .btn-neutral {
+    @apply px-3 py-1.5 rounded bg-studio-neutral hover:bg-studio-neutral-hover text-studio-text text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  /* Card / panel */
+  .panel {
+    @apply bg-studio-surface border border-studio-neutral/20 rounded-lg;
+  }
+
+  /* Section divider label */
+  .section-label {
+    @apply text-[10px] font-medium uppercase tracking-widest text-studio-neutral;
+  }
+
+  /* Monospace value (timecodes, numbers) */
+  .mono {
+    @apply font-mono text-studio-muted;
+  }
+}

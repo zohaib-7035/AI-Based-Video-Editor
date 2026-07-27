@@ -9,14 +9,31 @@ const SERVICE_LABELS: Record<keyof HealthResponse["services"], string> = {
   storage: "Storage",
 };
 
-function StatusBadge({ status }: { status: ServiceStatus }) {
-  const styles: Record<ServiceStatus, string> = {
-    ok: "bg-green-900 text-green-300 border border-green-700",
-    offline: "bg-yellow-900 text-yellow-300 border border-yellow-700",
-    error: "bg-red-900 text-red-300 border border-red-700",
-  };
+function StatusDot({ status }: { status: ServiceStatus }) {
   return (
-    <span className={`px-2 py-0.5 rounded text-xs font-medium ${styles[status]}`}>
+    <span
+      className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${
+        status === "ok"
+          ? "bg-studio-accent"
+          : status === "offline"
+          ? "bg-studio-neutral"
+          : "bg-red-500"
+      }`}
+    />
+  );
+}
+
+function StatusBadge({ status }: { status: ServiceStatus }) {
+  const cls =
+    status === "ok"
+      ? "text-studio-accent border-studio-accent/30 bg-studio-accent/10"
+      : status === "offline"
+      ? "text-studio-neutral border-studio-neutral/30 bg-studio-neutral/10"
+      : "text-red-400 border-red-900/40 bg-red-900/20";
+
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px] font-medium ${cls}`}>
+      <StatusDot status={status} />
       {status}
     </span>
   );
@@ -24,9 +41,9 @@ function StatusBadge({ status }: { status: ServiceStatus }) {
 
 function SkeletonCard() {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 animate-pulse">
-      <div className="h-4 bg-gray-700 rounded w-24 mb-2" />
-      <div className="h-5 bg-gray-700 rounded w-12" />
+    <div className="panel p-4 animate-pulse flex items-center justify-between">
+      <div className="h-3 bg-studio-neutral/20 rounded w-24" />
+      <div className="h-4 bg-studio-neutral/20 rounded w-14" />
     </div>
   );
 }
@@ -39,15 +56,13 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-white mb-1">AI Video Editor</h1>
-      <p className="text-gray-400 text-sm mb-8">
-        Open-source · Runs locally · No cloud
-      </p>
-
-      <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+    <div className="max-w-xl mx-auto">
+      <h1 className="text-xl font-semibold tracking-tight text-studio-text mb-1">
         System Status
-      </h2>
+      </h1>
+      <p className="text-xs text-studio-neutral mb-8">
+        Backend services and dependency health.
+      </p>
 
       {isLoading && (
         <div className="grid grid-cols-2 gap-3">
@@ -56,11 +71,13 @@ export default function Dashboard() {
       )}
 
       {isError && (
-        <div className="bg-red-950 border border-red-800 rounded-lg p-4 text-red-300 text-sm">
-          <strong>Cannot reach backend.</strong>{" "}
-          {error instanceof Error ? error.message : "Unknown error."}
-          <p className="mt-1 text-red-400 text-xs">
-            Make sure the backend is running: <code>uvicorn app.main:app --reload</code>
+        <div className="panel border-red-900/40 bg-red-900/10 p-4 text-xs text-red-400">
+          <p className="font-medium mb-1">Cannot reach backend.</p>
+          <p className="text-red-500/80">
+            {error instanceof Error ? error.message : "Unknown error."}
+          </p>
+          <p className="mt-2 text-studio-neutral font-mono">
+            uvicorn app.main:app --reload
           </p>
         </div>
       )}
@@ -72,18 +89,22 @@ export default function Dashboard() {
               ([key, status]) => (
                 <div
                   key={key}
-                  className="bg-gray-900 border border-gray-800 rounded-lg p-4 flex items-center justify-between"
+                  className="panel p-4 flex items-center justify-between"
                 >
-                  <span className="text-sm text-gray-300">{SERVICE_LABELS[key]}</span>
+                  <span className="text-xs text-studio-muted">{SERVICE_LABELS[key]}</span>
                   <StatusBadge status={status} />
                 </div>
               )
             )}
           </div>
-          <p className="text-xs text-gray-600">
-            API version {data.version} · Overall:{" "}
-            <StatusBadge status={data.status} />
-          </p>
+
+          <div className="flex items-center gap-3 text-[10px] text-studio-neutral font-mono">
+            <span>API v{data.version}</span>
+            <span className="text-studio-neutral/40">·</span>
+            <span className="flex items-center gap-1.5">
+              Overall <StatusBadge status={data.status} />
+            </span>
+          </div>
         </>
       )}
     </div>

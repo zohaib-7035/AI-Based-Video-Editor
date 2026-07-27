@@ -23,45 +23,49 @@ export default function TranscriptPanel({
   const hasContent = !!transcript.text || transcript.segments.length > 0;
 
   return (
-    <div className="mt-3 bg-gray-950 border border-gray-800 rounded-lg p-3 flex flex-col gap-3">
+    <div className="bg-studio-bg border border-studio-neutral/10 rounded-lg p-3 flex flex-col gap-3">
       {!hasContent && (
-        <p className="text-xs text-gray-500 italic">No speech detected in this video.</p>
+        <p className="text-[10px] text-studio-neutral italic">No speech detected in this video.</p>
       )}
 
+      {/* Full text */}
       {transcript.text && (
         <div className="max-h-28 overflow-y-auto">
-          <p className="text-xs text-gray-400 leading-relaxed">{transcript.text}</p>
+          <p className="text-xs text-studio-muted leading-relaxed">{transcript.text}</p>
         </div>
       )}
 
+      {/* Segment list */}
       {transcript.segments.length > 0 && (
         <>
-          <hr className="border-gray-800" />
-          <ul className="flex flex-col gap-1 max-h-40 overflow-y-auto">
+          <hr />
+          <ul className="flex flex-col gap-1 max-h-36 overflow-y-auto">
             {transcript.segments.map((seg, i) => (
               <li key={i} className="flex gap-2 text-xs">
-                <span className="text-gray-600 shrink-0 font-mono">
+                <span className="text-studio-neutral shrink-0 font-mono text-[10px]">
                   {formatTimestamp(seg.start)} → {formatTimestamp(seg.end)}
                 </span>
-                <span className="text-gray-300">{seg.text}</span>
+                <span className="text-studio-muted">{seg.text}</span>
               </li>
             ))}
           </ul>
         </>
       )}
 
+      {/* Language tag */}
       {transcript.language && (
-        <p className="text-[10px] text-gray-600 uppercase tracking-wide">
+        <p className="text-[9px] text-studio-neutral uppercase tracking-widest font-mono">
           Language: {transcript.language}
         </p>
       )}
 
-      <div className="flex gap-2 flex-wrap pt-1">
+      {/* Actions */}
+      <div className="flex gap-2 flex-wrap pt-1 border-t border-studio-neutral/10">
         {transcript.srt_path === null ? (
           <button
             onClick={onGenerateSubtitles}
             disabled={isGenerating}
-            className="px-3 py-1 rounded text-xs bg-amber-900 text-amber-200 hover:bg-amber-800 transition-colors disabled:opacity-50"
+            className="btn-primary"
           >
             {isGenerating ? "Generating…" : "Generate Subtitles"}
           </button>
@@ -70,16 +74,16 @@ export default function TranscriptPanel({
             <a
               href={getSubtitleSrtUrl(videoId)}
               download
-              className="px-3 py-1 rounded text-xs bg-green-900 text-green-200 hover:bg-green-800 transition-colors"
+              className="btn-secondary"
             >
-              Download SRT
+              ↓ SRT
             </a>
             <a
               href={getSubtitleVttUrl(videoId)}
               download
-              className="px-3 py-1 rounded text-xs bg-green-900 text-green-200 hover:bg-green-800 transition-colors"
+              className="btn-secondary"
             >
-              Download VTT
+              ↓ VTT
             </a>
           </>
         )}

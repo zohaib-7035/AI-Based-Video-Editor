@@ -16,37 +16,48 @@ export default function Layout({ children }: LayoutProps) {
   const { pathname } = useLocation();
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
-      <header className="border-b border-gray-800 px-6 py-4 flex items-center gap-4">
-        <div className="w-7 h-7 bg-violet-500 rounded flex items-center justify-center text-xs font-bold shrink-0">
-          AI
+    <div className="min-h-screen bg-studio-bg text-studio-text flex flex-col font-sans">
+      {/* ── Top bar ── */}
+      <header className="border-b border-studio-neutral/20 px-6 py-3 flex items-center gap-3 bg-studio-surface shrink-0">
+        {/* Logo mark */}
+        <div className="w-7 h-7 bg-studio-accent rounded flex items-center justify-center shrink-0">
+          <span className="text-[10px] font-semibold text-studio-text tracking-tight">AI</span>
         </div>
-        <span className="font-semibold tracking-tight text-white">
+
+        <span className="font-semibold tracking-tight text-studio-text text-sm">
           AI Video Editor
         </span>
 
-        <nav className="flex items-center gap-1 ml-4">
-          {NAV_LINKS.map(({ to, label }) => (
-            <Link
-              key={to}
-              to={to}
-              className={`px-3 py-1 rounded text-sm transition-colors ${
-                pathname === to
-                  ? "bg-gray-800 text-white"
-                  : "text-gray-400 hover:text-gray-200 hover:bg-gray-900"
-              }`}
-            >
-              {label}
-            </Link>
-          ))}
+        <div className="w-px h-4 bg-studio-neutral/30 mx-1" />
+
+        {/* Navigation */}
+        <nav className="flex items-center gap-0.5">
+          {NAV_LINKS.map(({ to, label }) => {
+            const active = pathname === to || (to !== "/" && pathname.startsWith(to));
+            return (
+              <Link
+                key={to}
+                to={to}
+                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                  active
+                    ? "bg-studio-bg text-studio-text border border-studio-neutral/20"
+                    : "text-studio-neutral hover:text-studio-muted hover:bg-studio-surface-hover"
+                }`}
+              >
+                {label}
+              </Link>
+            );
+          })}
         </nav>
 
-        <span className="ml-auto text-xs text-gray-500">v1.0.0</span>
+        <span className="ml-auto text-[10px] text-studio-neutral font-mono">v1.0.0</span>
       </header>
 
-      <main className="flex-1 p-6">{children}</main>
+      {/* ── Page content ── */}
+      <main className="flex-1 px-6 py-8">{children}</main>
 
-      <footer className="border-t border-gray-800 px-6 py-3 text-xs text-gray-600 text-center">
+      {/* ── Footer ── */}
+      <footer className="border-t border-studio-neutral/20 px-6 py-3 text-[10px] text-studio-neutral text-center tracking-wide">
         Open-source · Local · Free
       </footer>
     </div>

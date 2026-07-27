@@ -28,9 +28,7 @@ export default function UploadZone({ onFile, disabled = false }: UploadZoneProps
   function handleFile(file: File) {
     const ext = getExtension(file.name);
     if (!ALLOWED_EXTENSIONS.has(ext)) {
-      setValidationError(
-        `"${file.name}" is not a supported format. Accepted: ${ALLOWED_LABEL}`
-      );
+      setValidationError(`"${file.name}" is not supported. Accepted: ${ALLOWED_LABEL}`);
       setSelectedFile(null);
       return;
     }
@@ -44,9 +42,7 @@ export default function UploadZone({ onFile, disabled = false }: UploadZoneProps
     if (!disabled) setIsDragging(true);
   }
 
-  function handleDragLeave() {
-    setIsDragging(false);
-  }
+  function handleDragLeave() { setIsDragging(false); }
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
@@ -61,17 +57,17 @@ export default function UploadZone({ onFile, disabled = false }: UploadZoneProps
     if (file) handleFile(file);
   }
 
-  const borderColor = isDragging
-    ? "border-violet-500"
+  const borderCls = isDragging
+    ? "border-studio-accent bg-studio-accent/5"
     : validationError
-    ? "border-red-600"
-    : "border-gray-700";
+    ? "border-red-600/60"
+    : "border-studio-neutral/20 hover:border-studio-neutral/40";
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       <div
-        className={`border-2 border-dashed ${borderColor} rounded-xl p-10 text-center transition-colors ${
-          disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-gray-500"
+        className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${borderCls} ${
+          disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -93,23 +89,26 @@ export default function UploadZone({ onFile, disabled = false }: UploadZoneProps
         />
 
         {selectedFile ? (
-          <div className="space-y-1">
-            <p className="text-white font-medium">{selectedFile.name}</p>
-            <p className="text-gray-400 text-sm">{formatBytes(selectedFile.size)}</p>
+          <div className="flex flex-col gap-1">
+            <p className="text-sm font-medium text-studio-text">{selectedFile.name}</p>
+            <p className="text-xs text-studio-neutral font-mono">{formatBytes(selectedFile.size)}</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            <p className="text-gray-300 text-sm">
-              Drag and drop a video here, or{" "}
-              <span className="text-violet-400 underline">browse</span>
+          <div className="flex flex-col gap-2">
+            <div className="w-10 h-10 bg-studio-surface border border-studio-neutral/20 rounded-lg flex items-center justify-center mx-auto mb-3">
+              <span className="text-xl">↑</span>
+            </div>
+            <p className="text-sm text-studio-muted">
+              Drag a video here, or{" "}
+              <span className="text-studio-accent">browse</span>
             </p>
-            <p className="text-gray-600 text-xs">{ALLOWED_LABEL}</p>
+            <p className="text-[10px] text-studio-neutral font-mono">{ALLOWED_LABEL}</p>
           </div>
         )}
       </div>
 
       {validationError && (
-        <p className="text-red-400 text-sm">{validationError}</p>
+        <p className="text-xs text-red-400">{validationError}</p>
       )}
     </div>
   );

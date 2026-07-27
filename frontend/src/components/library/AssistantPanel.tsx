@@ -3,10 +3,10 @@ import { streamEditingPlan, streamExecutePlan } from "@/api/client";
 import type { EditingCommand, EditingPlan } from "@/types";
 
 const ACTION_LABELS: Record<EditingCommand["action"], string> = {
-  remove_silence: "Remove silence segments",
-  remove_fillers: "Remove filler words",
+  remove_silence:    "Remove silence segments",
+  remove_fillers:    "Remove filler words",
   generate_subtitles: "Generate subtitles",
-  export: "Export video",
+  export:            "Export video",
 };
 
 type StepStatus = "pending" | "running" | "done" | "error" | "warning";
@@ -20,9 +20,17 @@ interface ExecutionStep {
 const STATUS_ICON: Record<StepStatus, string> = {
   pending: "○",
   running: "◌",
-  done: "✓",
-  error: "✗",
+  done:    "✓",
+  error:   "✗",
   warning: "⚠",
+};
+
+const STATUS_COLOR: Record<StepStatus, string> = {
+  pending: "text-studio-neutral",
+  running: "text-studio-accent",
+  done:    "text-studio-accent",
+  error:   "text-red-400",
+  warning: "text-studio-neutral",
 };
 
 interface AssistantPanelProps {
@@ -65,10 +73,8 @@ export default function AssistantPanel({ videoId, onError, onExecuted }: Assista
 
   async function handleExecute() {
     if (!plan || isStreaming || isExecuting) return;
-
     const controller = new AbortController();
     abortExecuteRef.current = controller;
-
     setIsExecuting(true);
     setExecutedPlanUrl(null);
     setExecutionError(null);
@@ -113,10 +119,8 @@ export default function AssistantPanel({ videoId, onError, onExecuted }: Assista
 
   async function handleSubmit() {
     if (!prompt.trim() || isStreaming) return;
-
     const controller = new AbortController();
     abortRef.current = controller;
-
     setIsStreaming(true);
     setStreamingText("");
     setPlan(null);
@@ -147,13 +151,11 @@ export default function AssistantPanel({ videoId, onError, onExecuted }: Assista
   }
 
   return (
-    <div className="flex flex-col gap-3 border-t border-gray-800 pt-3">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-          AI Assistant
-        </span>
-      </div>
+    <div className="flex flex-col gap-3 border-t border-studio-neutral/20 pt-3">
+      {/* Header */}
+      <span className="section-label">AI Assistant</span>
 
+      {/* Prompt input */}
       <div className="flex flex-col gap-2">
         <textarea
           value={prompt}
@@ -161,73 +163,76 @@ export default function AssistantPanel({ videoId, onError, onExecuted }: Assista
           placeholder='e.g. "Remove all silences and filler words, then export at 720p"'
           disabled={isStreaming}
           rows={2}
-          className="w-full rounded bg-gray-800 border border-gray-700 text-xs text-gray-200 placeholder-gray-600 px-2 py-1.5 resize-none focus:outline-none focus:border-blue-700 disabled:opacity-50"
+          className="w-full rounded bg-studio-bg border border-studio-neutral/20 text-xs text-studio-muted placeholder-studio-neutral/50 px-2.5 py-2 resize-none focus:outline-none focus:border-studio-accent transition-colors disabled:opacity-40 font-sans"
         />
         <button
           onClick={handleSubmit}
           disabled={isStreaming || !prompt.trim()}
-          className="px-3 py-1 rounded text-xs bg-blue-900 text-blue-200 hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed self-start"
+          className="btn-primary self-start"
         >
           {isStreaming ? "Thinking…" : "Generate Plan"}
         </button>
       </div>
 
+      {/* Streaming preview */}
       {isStreaming && streamingText && (
-        <pre className="text-[10px] text-gray-500 whitespace-pre-wrap break-words max-h-24 overflow-y-auto bg-gray-950 rounded px-2 py-1">
+        <pre className="text-[10px] text-studio-neutral/70 whitespace-pre-wrap break-words max-h-24 overflow-y-auto bg-studio-bg border border-studio-neutral/10 rounded px-2.5 py-2 font-mono">
           {streamingText}
         </pre>
       )}
 
+      {/* Generated plan */}
       {plan && !isStreaming && (
-        <div className="flex flex-col gap-1">
-          <span className="text-[10px] text-gray-500 uppercase tracking-wide font-semibold">
-            Editing Plan
-          </span>
+        <div className="flex flex-col gap-2">
+          <span className="section-label">Editing Plan</span>
+
           <ol className="flex flex-col gap-1">
             {plan.commands.map((cmd, i) => (
               <li
                 key={i}
-                className="flex items-start gap-2 text-xs text-gray-300 bg-gray-800 rounded px-2 py-1"
+                className="flex items-start gap-2 text-xs text-studio-muted bg-studio-bg border border-studio-neutral/10 rounded px-2.5 py-1.5"
               >
-                <span className="text-blue-400 font-bold shrink-0">{i + 1}.</span>
+                <span className="text-studio-accent font-medium shrink-0 font-mono">{i + 1}.</span>
                 <span>
                   {ACTION_LABELS[cmd.action]}
                   {cmd.params && (
-                    <span className="text-gray-500">{formatParams(cmd.params)}</span>
+                    <span className="text-studio-neutral font-mono">{formatParams(cmd.params)}</span>
                   )}
                 </span>
               </li>
             ))}
           </ol>
+
           {plan.warnings.length > 0 && (
-            <p className="text-[10px] text-yellow-600 mt-1">
-              Unsupported actions ignored: {plan.warnings.join(", ")}
+            <p className="text-[10px] text-studio-neutral/70 font-mono">
+              Skipped: {plan.warnings.join(", ")}
             </p>
           )}
+
           <button
             onClick={handleExecute}
             disabled={isStreaming || isExecuting}
-            className="mt-2 px-3 py-1 rounded text-xs bg-green-900 text-green-200 hover:bg-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed self-start"
+            className="btn-primary self-start"
           >
             {isExecuting ? "Executing…" : "Execute Plan"}
           </button>
 
+          {/* Execution step list */}
           {executionSteps.length > 0 && (
-            <ol className="flex flex-col gap-1 mt-2">
+            <ol className="flex flex-col gap-1 mt-1">
               {executionSteps.map((s, i) => (
-                <li key={i} className="flex items-start gap-2 text-xs rounded px-2 py-1 bg-gray-900">
-                  <span className={
-                    s.status === "done" ? "text-green-400" :
-                    s.status === "running" ? "text-blue-400" :
-                    s.status === "error" ? "text-red-400" :
-                    s.status === "warning" ? "text-yellow-400" :
-                    "text-gray-600"
-                  }>
+                <li
+                  key={i}
+                  className="flex items-start gap-2 text-xs bg-studio-bg border border-studio-neutral/10 rounded px-2.5 py-1.5"
+                >
+                  <span className={`font-mono shrink-0 ${STATUS_COLOR[s.status]}`}>
                     {STATUS_ICON[s.status]}
                   </span>
-                  <span className="text-gray-300">
+                  <span className="text-studio-muted">
                     {ACTION_LABELS[s.action as EditingCommand["action"]] ?? s.action}
-                    {s.detail && <span className="text-gray-500 ml-1">— {s.detail}</span>}
+                    {s.detail && (
+                      <span className="text-studio-neutral ml-1 font-mono text-[10px]">— {s.detail}</span>
+                    )}
                   </span>
                 </li>
               ))}
@@ -235,27 +240,26 @@ export default function AssistantPanel({ videoId, onError, onExecuted }: Assista
           )}
 
           {executionError && (
-            <p className="text-xs text-red-400 mt-1">Execution stopped: {executionError}</p>
+            <p className="text-[10px] text-red-400 font-mono">Error: {executionError}</p>
           )}
 
+          {/* Processed preview */}
           {executedPlanUrl && (() => {
             const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
             const isStream = executedPlanUrl.includes("/stream");
             const fullUrl = `${BASE}${executedPlanUrl}`;
             return (
-              <div className="flex flex-col gap-2 mt-2">
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                  Processed Preview
-                </span>
+              <div className="flex flex-col gap-2 mt-1 pt-2 border-t border-studio-neutral/10">
+                <span className="section-label">Processed Preview</span>
                 {isStream ? (
                   <video controls className="w-full rounded" src={fullUrl} />
                 ) : (
                   <a
                     href={fullUrl}
                     download
-                    className="inline-flex items-center gap-1 px-3 py-1 rounded text-xs bg-blue-900 text-blue-200 hover:bg-blue-800 transition-colors self-start"
+                    className="text-xs text-studio-accent hover:text-studio-accent-hover transition-colors"
                   >
-                    Download Edited Video
+                    ↓ Download Edited Video
                   </a>
                 )}
               </div>
@@ -264,7 +268,7 @@ export default function AssistantPanel({ videoId, onError, onExecuted }: Assista
         </div>
       )}
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-[10px] text-red-400 font-mono">{error}</p>}
     </div>
   );
 }

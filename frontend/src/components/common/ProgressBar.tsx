@@ -7,13 +7,13 @@ export default function ProgressBar({ percent, label }: ProgressBarProps) {
   const clamped = Math.min(100, Math.max(0, percent));
 
   return (
-    <div className="w-full">
+    <div className="w-full flex flex-col gap-1">
       {label && (
-        <p className="text-sm text-gray-400 mb-1">{label}</p>
+        <p className="text-xs text-studio-muted font-medium">{label}</p>
       )}
-      <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+      <div className="w-full bg-studio-bg rounded-full h-1.5 overflow-hidden border border-studio-neutral/10">
         <div
-          className="h-2 bg-violet-500 rounded-full transition-all duration-150 ease-out"
+          className="h-full bg-studio-accent rounded-full transition-all duration-200 ease-out"
           style={{ width: `${clamped}%` }}
           role="progressbar"
           aria-valuenow={clamped}

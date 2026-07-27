@@ -28,16 +28,15 @@ export default function FillerPanel({
   const hasTranscript = transcript !== null && transcript.status === "completed";
 
   return (
-    <div className="flex flex-col gap-3 border-t border-gray-800 pt-3">
+    <div className="flex flex-col gap-3 border-t border-studio-neutral/20 pt-3">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-          Filler Words
-        </span>
+        <span className="section-label">Filler Words</span>
         <button
           onClick={onDetect}
           disabled={isDetecting || !hasTranscript}
           title={!hasTranscript ? "Transcribe the video first" : undefined}
-          className="px-3 py-1 rounded text-xs bg-purple-900 text-purple-200 hover:bg-purple-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn-secondary disabled:opacity-30"
         >
           {!hasTranscript
             ? "Transcribe first"
@@ -54,22 +53,19 @@ export default function FillerPanel({
           {fillerDetection.segments.length === 0 ? (
             exportStreamUrl ? (
               <div className="flex items-center justify-between">
-                <p className="text-xs text-green-400">Fillers removed — see preview below.</p>
-                <button
-                  onClick={onRemove}
-                  disabled={isRemoving}
-                  className="px-3 py-1 rounded text-xs bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors disabled:opacity-50"
-                >
+                <p className="text-[10px] text-studio-accent">Fillers removed — see preview below.</p>
+                <button onClick={onRemove} disabled={isRemoving} className="btn-ghost">
                   {isRemoving ? "Removing…" : "Re-remove"}
                 </button>
               </div>
             ) : (
-              <p className="text-xs text-gray-500 italic">No filler words detected in this video.</p>
+              <p className="text-[10px] text-studio-neutral italic">No filler words detected.</p>
             )
           ) : (
             <>
+              {/* Segment table */}
               <div className="flex flex-col gap-1 max-h-40 overflow-y-auto pr-1">
-                <div className="grid grid-cols-4 gap-1 text-[10px] text-gray-600 uppercase tracking-wide px-1">
+                <div className="grid grid-cols-4 gap-1 text-[9px] text-studio-neutral uppercase tracking-widest px-2 pb-1">
                   <span>Word</span>
                   <span>Start</span>
                   <span>End</span>
@@ -78,12 +74,12 @@ export default function FillerPanel({
                 {fillerDetection.segments.map((seg, i) => (
                   <div
                     key={i}
-                    className="grid grid-cols-4 gap-1 text-xs text-gray-300 bg-gray-800 rounded px-2 py-1"
+                    className="grid grid-cols-4 gap-1 text-[10px] font-mono bg-studio-bg border border-studio-neutral/10 rounded px-2 py-1.5"
                   >
-                    <span className="text-purple-300 font-medium">{seg.word}</span>
-                    <span>{formatSeconds(seg.start)}</span>
-                    <span>{formatSeconds(seg.end)}</span>
-                    <span>{seg.duration.toFixed(2)}s</span>
+                    <span className="text-studio-accent font-medium">{seg.word}</span>
+                    <span className="text-studio-muted">{formatSeconds(seg.start)}</span>
+                    <span className="text-studio-muted">{formatSeconds(seg.end)}</span>
+                    <span className="text-studio-muted">{seg.duration.toFixed(2)}s</span>
                   </div>
                 ))}
               </div>
@@ -91,7 +87,7 @@ export default function FillerPanel({
               <button
                 onClick={onRemove}
                 disabled={isRemoving}
-                className="px-3 py-1 rounded text-xs bg-red-900 text-red-200 hover:bg-red-800 transition-colors disabled:opacity-50 self-start"
+                className="btn-primary self-start"
               >
                 {isRemoving ? "Removing…" : "Remove Fillers"}
               </button>
@@ -100,16 +96,11 @@ export default function FillerPanel({
         </>
       )}
 
+      {/* Preview */}
       {exportStreamUrl && (
-        <div className="flex flex-col gap-1">
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-            Filler-Removed Preview
-          </span>
-          <video
-            controls
-            className="w-full rounded"
-            src={exportStreamUrl}
-          />
+        <div className="flex flex-col gap-2 pt-1 border-t border-studio-neutral/10">
+          <span className="section-label">Filler-Removed Preview</span>
+          <video controls className="w-full rounded" src={exportStreamUrl} />
         </div>
       )}
     </div>

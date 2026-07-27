@@ -15,18 +15,12 @@ export default function ExportPanel({ videoId, onError }: ExportPanelProps) {
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  useEffect(() => {
-    return () => {
-      abortRef.current?.abort();
-    };
-  }, []);
+  useEffect(() => { return () => { abortRef.current?.abort(); }; }, []);
 
   async function handleExport() {
     if (isExporting) return;
-
     const controller = new AbortController();
     abortRef.current = controller;
-
     setIsExporting(true);
     setProgress(null);
     setDownloadUrl(null);
@@ -63,7 +57,7 @@ export default function ExportPanel({ videoId, onError }: ExportPanelProps) {
           value={resolution}
           onChange={(e) => setResolution(e.target.value as "720p" | "1080p")}
           disabled={isExporting}
-          className="rounded bg-gray-800 border border-gray-700 text-xs text-gray-200 px-1.5 py-0.5 focus:outline-none focus:border-emerald-700 disabled:opacity-50"
+          className="rounded bg-studio-bg border border-studio-neutral/20 text-[10px] text-studio-muted font-mono px-1.5 py-0.5 focus:outline-none focus:border-studio-accent disabled:opacity-40 cursor-pointer"
         >
           <option value="1080p">1080p</option>
           <option value="720p">720p</option>
@@ -71,30 +65,32 @@ export default function ExportPanel({ videoId, onError }: ExportPanelProps) {
         <button
           onClick={handleExport}
           disabled={isExporting}
-          className="px-2 py-0.5 rounded text-xs bg-emerald-800 text-emerald-200 hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+          className="px-2 py-0.5 rounded text-[10px] font-medium bg-studio-neutral hover:bg-studio-neutral-hover text-studio-text transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
         >
           {isExporting ? "Exporting…" : "Export MP4"}
         </button>
       </div>
 
       {(isExporting || progress !== null) && downloadUrl === null && (
-        <ProgressBar
-          percent={progress ?? 0}
-          label={progress !== null && progress > 0 ? `${progress}%` : "Encoding…"}
-        />
+        <div className="w-full">
+          <ProgressBar
+            percent={progress ?? 0}
+            label={progress !== null && progress > 0 ? `${progress}%` : "Encoding…"}
+          />
+        </div>
       )}
 
       {downloadUrl && (
         <a
           href={downloadUrl}
           download
-          className="text-xs text-blue-400 hover:text-blue-300 underline"
+          className="text-[10px] text-studio-accent hover:text-studio-accent-hover transition-colors"
         >
-          Download MP4
+          ↓ Download MP4
         </a>
       )}
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-[10px] text-red-400">{error}</p>}
     </div>
   );
 }

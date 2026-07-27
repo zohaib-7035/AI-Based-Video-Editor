@@ -60,13 +60,11 @@ export default function VideoCard({ video, mode = "manual", isActive, onPreviewT
   const [fillerError, setFillerError] = useState<string | null>(null);
   const [assistantError, setAssistantError] = useState<string | null>(null);
 
-  // Editable state tracked for undo/redo
   const [transcript, setTranscript] = useState<Transcript | null>(null);
   const [showTranscript, setShowTranscript] = useState(false);
   const [silenceDetection, setSilenceDetection] = useState<SilenceDetection | null>(null);
   const [fillerDetection, setFillerDetection] = useState<FillerDetection | null>(null);
 
-  // Undo/redo via refs (avoids stale closure issues in mutations/effects)
   type Snapshot = { transcript: Transcript | null; showTranscript: boolean; silenceDetection: SilenceDetection | null; fillerDetection: FillerDetection | null };
   const latestRef = useRef<Snapshot>({ transcript, showTranscript, silenceDetection, fillerDetection });
   const historyRef = useRef<Snapshot[]>([]);
@@ -74,7 +72,6 @@ export default function VideoCard({ video, mode = "manual", isActive, onPreviewT
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
 
-  // Keep latestRef in sync with current state
   useEffect(() => {
     latestRef.current = { transcript, showTranscript, silenceDetection, fillerDetection };
   });
@@ -112,152 +109,88 @@ export default function VideoCard({ video, mode = "manual", isActive, onPreviewT
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteVideo(video.id),
-    onSuccess: () => {
-      onDeleted();
-      setConfirmDelete(false);
-    },
-    onError: (err: Error) => {
-      setDeleteError(err.message);
-      setConfirmDelete(false);
-    },
+    onSuccess: () => { onDeleted(); setConfirmDelete(false); },
+    onError: (err: Error) => { setDeleteError(err.message); setConfirmDelete(false); },
   });
 
   const transcribeMutation = useMutation({
     mutationFn: () => transcribeVideo(video.id),
-    onSuccess: () => {
-      setTranscribeError(null);
-      queryClient.invalidateQueries({ queryKey: ["videos"] });
-    },
-    onError: (err: Error) => {
-      setTranscribeError(err.message);
-    },
+    onSuccess: () => { setTranscribeError(null); queryClient.invalidateQueries({ queryKey: ["videos"] }); },
+    onError: (err: Error) => { setTranscribeError(err.message); },
   });
 
   const subtitleMutation = useMutation({
     mutationFn: () => generateSubtitles(video.id),
-    onSuccess: () => {
-      recordHistory();
-      setSubtitleError(null);
-      getTranscript(video.id).then(setTranscript).catch(() => {});
-    },
-    onError: (err: Error) => {
-      setSubtitleError(err.message);
-    },
+    onSuccess: () => { recordHistory(); setSubtitleError(null); getTranscript(video.id).then(setTranscript).catch(() => {}); },
+    onError: (err: Error) => { setSubtitleError(err.message); },
   });
 
   const detectMutation = useMutation({
     mutationFn: () => detectSilence(video.id),
-    onSuccess: () => {
-      recordHistory();
-      setSilenceError(null);
-      getSilence(video.id).then(setSilenceDetection).catch(() => {});
-    },
-    onError: (err: Error) => {
-      setSilenceError(err.message);
-    },
+    onSuccess: () => { recordHistory(); setSilenceError(null); getSilence(video.id).then(setSilenceDetection).catch(() => {}); },
+    onError: (err: Error) => { setSilenceError(err.message); },
   });
 
   const removeMutation = useMutation({
     mutationFn: () => removeSilence(video.id),
     onSuccess: () => {
-      recordHistory();
-      setSilenceError(null);
+      recordHistory(); setSilenceError(null);
       setSilenceDetection((prev) => (prev ? { ...prev, segments: [] } : null));
       queryClient.invalidateQueries({ queryKey: ["videos"] });
     },
-    onError: (err: Error) => {
-      setSilenceError(err.message);
-    },
+    onError: (err: Error) => { setSilenceError(err.message); },
   });
 
   const detectFillerMutation = useMutation({
     mutationFn: () => detectFillers(video.id),
-    onSuccess: () => {
-      recordHistory();
-      setFillerError(null);
-      getFillers(video.id).then(setFillerDetection).catch(() => {});
-    },
-    onError: (err: Error) => {
-      setFillerError(err.message);
-    },
+    onSuccess: () => { recordHistory(); setFillerError(null); getFillers(video.id).then(setFillerDetection).catch(() => {}); },
+    onError: (err: Error) => { setFillerError(err.message); },
   });
 
   const removeFillerMutation = useMutation({
     mutationFn: () => removeFillers(video.id),
     onSuccess: () => {
-      recordHistory();
-      setFillerError(null);
+      recordHistory(); setFillerError(null);
       setFillerDetection((prev) => (prev ? { ...prev, segments: [] } : null));
       queryClient.invalidateQueries({ queryKey: ["videos"] });
     },
-    onError: (err: Error) => {
-      setFillerError(err.message);
-    },
+    onError: (err: Error) => { setFillerError(err.message); },
   });
 
-  // Reset CC state whenever the player opens so it matches the track's default mode.
-  useEffect(() => {
-    if (isActive) setCcEnabled(false);
-  }, [isActive]);
+  useEffect(() => { if (isActive) setCcEnabled(false); }, [isActive]);
 
-  // Open WebSocket while transcription is in progress; clean up on unmount.
   useEffect(() => {
     if (video.status !== "processing") return;
-
     const ws = createTranscriptionSocket(video.id);
-
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data as string);
       if (data.status === "processing") {
         setTranscriptProgress(data.progress as number);
       } else if (data.status === "completed") {
-        ws.close();
-        setShowTranscript(true);
+        ws.close(); setShowTranscript(true);
         queryClient.invalidateQueries({ queryKey: ["videos"] });
       } else if (data.status === "error") {
         setTranscribeError((data.detail as string) ?? "Transcription failed");
         ws.close();
       }
     };
-
-    ws.onerror = () => {
-      setTranscribeError("WebSocket connection error");
-    };
-
+    ws.onerror = () => { setTranscribeError("WebSocket connection error"); };
     return () => ws.close();
   }, [video.status, video.id, queryClient]);
 
-  // Fetch saved transcript once the video is ready and we don't have it yet.
   useEffect(() => {
     if (video.status !== "ready" || transcript !== null) return;
-
-    getTranscript(video.id)
-      .then(setTranscript)
-      .catch(() => {
-        // No transcript yet — silently ignore (video may be ready but never transcribed).
-      });
+    getTranscript(video.id).then(setTranscript).catch(() => {});
   }, [video.status, video.id, transcript]);
 
-  // Restore silence detection state on mount if detection was previously run.
   useEffect(() => {
     if (video.status !== "ready" || silenceDetection !== null) return;
-
-    getSilence(video.id)
-      .then(setSilenceDetection)
-      .catch(() => {
-        // 404 means detection was never run — not an error.
-      });
+    getSilence(video.id).then(setSilenceDetection).catch(() => {});
   }, [video.status, video.id, silenceDetection]);
 
-  // Restore filler detection state on mount if detection was previously run.
   useEffect(() => {
     if (video.status !== "ready" || fillerDetection !== null) return;
-
-    getFillers(video.id)
-      .then(setFillerDetection)
-      .catch(() => {
-        // 404 means detection was never run — not an error.
-      });
+    getFillers(video.id).then(setFillerDetection).catch(() => {});
   }, [video.status, video.id, fillerDetection]);
 
   function toggleCC() {
@@ -272,14 +205,19 @@ export default function VideoCard({ video, mode = "manual", isActive, onPreviewT
   const hasSubtitles = transcript?.vtt_path != null;
   const showVideo = isActive || mode === "ai";
 
+  const anyError = deleteError || transcribeError || subtitleError || silenceError || fillerError || assistantError;
+
   return (
     <div
-      className="bg-gray-900 border border-gray-800 rounded-lg p-4 flex flex-col gap-3"
+      className="panel p-4 flex flex-col gap-3"
       onMouseLeave={() => setConfirmDelete(false)}
     >
-      {/* ── Header: filename + export button (top-right) ── */}
+      {/* ── Header: filename + status + export ── */}
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-medium text-white truncate" title={video.filename}>
+        <p
+          className="text-xs font-medium text-studio-text truncate leading-5"
+          title={video.filename}
+        >
           {video.filename}
         </p>
         <div className="flex items-center gap-2 shrink-0">
@@ -289,47 +227,53 @@ export default function VideoCard({ video, mode = "manual", isActive, onPreviewT
               onError={(msg) => setAssistantError(msg || null)}
             />
           )}
-          <span className="text-xs text-gray-500">{video.status}</span>
+          <span
+            className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${
+              video.status === "ready"
+                ? "text-studio-accent border-studio-accent/30 bg-studio-accent/10"
+                : "text-studio-neutral border-studio-neutral/20 bg-studio-surface-hover"
+            }`}
+          >
+            {video.status}
+          </span>
         </div>
       </div>
 
-      {/* ── Meta info ── */}
-      <div className="grid grid-cols-3 gap-2 text-xs text-gray-400">
-        <div>
-          <span className="block text-gray-600 uppercase tracking-wide text-[10px]">Duration</span>
-          {formatDuration(video.duration)}
-        </div>
-        <div>
-          <span className="block text-gray-600 uppercase tracking-wide text-[10px]">Size</span>
-          {formatSize(video.file_size)}
-        </div>
-        <div>
-          <span className="block text-gray-600 uppercase tracking-wide text-[10px]">Uploaded</span>
-          {new Date(video.created_at).toLocaleDateString()}
-        </div>
+      {/* ── Meta grid ── */}
+      <div className="grid grid-cols-3 gap-1.5">
+        {[
+          ["Duration", formatDuration(video.duration)],
+          ["Size",     formatSize(video.file_size)],
+          ["Date",     new Date(video.created_at).toLocaleDateString()],
+        ].map(([label, value]) => (
+          <div key={label} className="bg-studio-bg rounded px-2 py-1.5 border border-studio-neutral/10">
+            <span className="block text-[9px] text-studio-neutral uppercase tracking-widest mb-0.5">
+              {label}
+            </span>
+            <span className="text-[11px] text-studio-muted font-mono">{value}</span>
+          </div>
+        ))}
       </div>
 
-      {/* ── Video player: always visible in AI mode, toggle in manual ── */}
+      {/* ── Video player ── */}
       {showVideo && (
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1.5">
           <video
             ref={videoRef}
             controls
             className="w-full rounded"
             src={getStreamUrl(video.id)}
           >
-            {hasSubtitles && (
-              <track kind="subtitles" src={getSubtitleVttUrl(video.id)} />
-            )}
+            {hasSubtitles && <track kind="subtitles" src={getSubtitleVttUrl(video.id)} />}
           </video>
           {hasSubtitles && (
             <div className="flex justify-end">
               <button
                 onClick={toggleCC}
-                className={`px-2 py-0.5 rounded text-xs font-bold transition-colors ${
+                className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors ${
                   ccEnabled
-                    ? "bg-white text-gray-900"
-                    : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                    ? "bg-studio-accent text-studio-text"
+                    : "bg-studio-surface border border-studio-neutral/20 text-studio-neutral hover:text-studio-muted"
                 }`}
               >
                 CC
@@ -339,7 +283,7 @@ export default function VideoCard({ video, mode = "manual", isActive, onPreviewT
         </div>
       )}
 
-      {/* ── Manual-only panels ── */}
+      {/* ── Manual panels ── */}
       {mode === "manual" && showTranscript && transcript && (
         <TranscriptPanel
           transcript={transcript}
@@ -372,7 +316,7 @@ export default function VideoCard({ video, mode = "manual", isActive, onPreviewT
         />
       )}
 
-      {/* ── AI-only panel ── */}
+      {/* ── AI panel ── */}
       {mode === "ai" && video.status === "ready" && (
         <AssistantPanel
           videoId={video.id}
@@ -381,47 +325,52 @@ export default function VideoCard({ video, mode = "manual", isActive, onPreviewT
       )}
 
       {/* ── Errors ── */}
-      {(deleteError || transcribeError || subtitleError || silenceError || fillerError || assistantError) && (
-        <div className="flex flex-col gap-1">
-          {deleteError && <p className="text-xs text-red-400">{deleteError}</p>}
-          {transcribeError && <p className="text-xs text-red-400">{transcribeError}</p>}
-          {subtitleError && <p className="text-xs text-red-400">{subtitleError}</p>}
-          {silenceError && <p className="text-xs text-red-400">{silenceError}</p>}
-          {fillerError && <p className="text-xs text-red-400">{fillerError}</p>}
-          {assistantError && <p className="text-xs text-red-400">{assistantError}</p>}
+      {anyError && (
+        <div className="flex flex-col gap-1 pt-1 border-t border-studio-neutral/10">
+          {[deleteError, transcribeError, subtitleError, silenceError, fillerError, assistantError]
+            .filter(Boolean)
+            .map((msg, i) => (
+              <p key={i} className="text-[10px] text-red-400">{msg}</p>
+            ))}
         </div>
       )}
 
-      {/* ── Bottom action buttons ── */}
-      <div className="flex flex-col gap-2 mt-auto pt-1">
+      {/* ── Action bar ── */}
+      <div className="flex items-center gap-1.5 flex-wrap mt-auto pt-1 border-t border-studio-neutral/10">
         {video.status === "processing" ? (
           <ProgressBar percent={transcriptProgress} label="Transcribing…" />
         ) : (
-          <div className="flex items-center gap-2 flex-wrap">
+          <>
             {/* Undo / Redo */}
             <button
               onClick={handleUndo}
               disabled={!canUndo}
-              title="Undo last action"
-              className="px-2 py-1 rounded text-xs bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Undo"
+              className="px-2 py-1 rounded text-[10px] text-studio-neutral hover:text-studio-muted hover:bg-studio-surface-hover transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              ↩ Undo
+              ↩
             </button>
             <button
               onClick={handleRedo}
               disabled={!canRedo}
-              title="Redo last undone action"
-              className="px-2 py-1 rounded text-xs bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Redo"
+              className="px-2 py-1 rounded text-[10px] text-studio-neutral hover:text-studio-muted hover:bg-studio-surface-hover transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              ↪ Redo
+              ↪
             </button>
+
+            <div className="w-px h-3 bg-studio-neutral/20 mx-0.5" />
 
             {mode === "manual" && (
               <button
                 onClick={onPreviewToggle}
-                className="px-3 py-1 rounded text-xs bg-violet-900 text-violet-200 hover:bg-violet-800 transition-colors"
+                className={`px-2.5 py-1 rounded text-[10px] font-medium transition-colors ${
+                  isActive
+                    ? "bg-studio-accent/20 text-studio-accent border border-studio-accent/30"
+                    : "text-studio-neutral hover:text-studio-muted hover:bg-studio-surface-hover"
+                }`}
               >
-                {isActive ? "Hide Preview" : "Preview"}
+                {isActive ? "Hide" : "Preview"}
               </button>
             )}
 
@@ -429,38 +378,44 @@ export default function VideoCard({ video, mode = "manual", isActive, onPreviewT
               transcript !== null ? (
                 <button
                   onClick={() => setShowTranscript((s) => !s)}
-                  className="px-3 py-1 rounded text-xs bg-teal-900 text-teal-200 hover:bg-teal-800 transition-colors"
+                  className={`px-2.5 py-1 rounded text-[10px] font-medium transition-colors ${
+                    showTranscript
+                      ? "bg-studio-neutral/20 text-studio-muted border border-studio-neutral/30"
+                      : "text-studio-neutral hover:text-studio-muted hover:bg-studio-surface-hover"
+                  }`}
                 >
-                  {showTranscript ? "Hide Transcript" : "View Transcript"}
+                  {showTranscript ? "Hide Transcript" : "Transcript"}
                 </button>
               ) : (
                 <button
                   onClick={() => transcribeMutation.mutate()}
                   disabled={transcribeMutation.isPending}
-                  className="px-3 py-1 rounded text-xs bg-indigo-900 text-indigo-200 hover:bg-indigo-800 transition-colors disabled:opacity-50"
+                  className="px-2.5 py-1 rounded text-[10px] font-medium bg-studio-accent hover:bg-studio-accent-hover text-studio-text transition-colors disabled:opacity-40"
                 >
                   {transcribeMutation.isPending ? "Starting…" : "Transcribe"}
                 </button>
               )
             )}
 
+            <div className="ml-auto" />
+
             {confirmDelete ? (
               <button
                 onClick={() => deleteMutation.mutate()}
                 disabled={deleteMutation.isPending}
-                className="px-3 py-1 rounded text-xs bg-red-700 text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+                className="px-2.5 py-1 rounded text-[10px] font-medium bg-red-900/40 text-red-400 border border-red-900/40 hover:bg-red-900/60 transition-colors disabled:opacity-40"
               >
                 {deleteMutation.isPending ? "Deleting…" : "Confirm?"}
               </button>
             ) : (
               <button
                 onClick={() => setConfirmDelete(true)}
-                className="px-3 py-1 rounded text-xs text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors"
+                className="px-2.5 py-1 rounded text-[10px] text-studio-neutral hover:text-red-400 hover:bg-studio-surface-hover transition-colors"
               >
                 Delete
               </button>
             )}
-          </div>
+          </>
         )}
       </div>
     </div>
