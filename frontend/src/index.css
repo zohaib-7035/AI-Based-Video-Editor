@@ -3,12 +3,16 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary:   #121212;
-  --bg-secondary: #1E1E1E;
-  --text-primary: #E0E0E0;
-  --text-secondary: #D3D3D3;
-  --accent:  #6082B6;
-  --neutral: #708090;
+  --bg-primary:    #121212;
+  --bg-secondary:  #1E1E1E;
+  --bg-hover:      #262626;
+  --text-primary:  #E0E0E0;
+  --text-secondary:#D3D3D3;
+  --accent:        #6082B6;
+  --accent-tint:   rgba(96, 130, 182, 0.15);
+  --neutral:       #708090;
+  --border:        rgba(112, 128, 144, 0.2);
+  --divider:       rgba(112, 128, 144, 0.15);
 }
 
 @layer base {
@@ -47,6 +51,38 @@
   :focus-visible { outline: 2px solid #6082B6; outline-offset: 2px; }
 
   hr { border-color: rgba(112, 128, 144, 0.2); }
+
+  /* NLE scrub / timeline range inputs */
+  input[type="range"].nle-scrub {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 3px;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"].nle-scrub::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #6082B6;
+    cursor: pointer;
+    box-shadow: 0 0 0 2px rgba(96,130,182,0.25);
+  }
+  input[type="range"].nle-scrub::-moz-range-thumb {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #6082B6;
+    border: none;
+    cursor: pointer;
+  }
+  input[type="range"].nle-scrub:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
 }
 
 @layer components {
